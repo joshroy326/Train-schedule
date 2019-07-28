@@ -9,8 +9,8 @@ var firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-// alert("hi");
 
+var database = firebase.database();
 
 $("#add-train").on("click", function (event) {
     event.preventDefault();
@@ -25,9 +25,51 @@ $("#add-train").on("click", function (event) {
 
     database.ref().push(train);
 
-    //clear inputs 
+    
     $("#train-name").val("");
     $("#destination").val("");
-    $("#first-train-time").val("");
-    $("#frequency").val("");
+    $("#first-train").val("");
+    $("#frequncy").val("");
+});
+database.ref().on("child_added", function (snapshot) {
+
+    var firstTrainTimeConverted = moment(snapshot.val().firstTrain, "HH:mm");
+    console.log(firstTrainTimeConverted);
+
+    var currentTime = moment();
+    
+    var minutesUntilNextTrain = trainFrequency - remainderInTime;
+    console.log("MINUTES AWAY: " + minutesUntilNextTrain);
+
+    var differenceTrainTime = moment().diff(moment(firstTrainTimeConverted), "minutes");
+    console.log("DIFFERENCE IN TRAIN TIME: " + differenceTrainTime);
+
+    var nextTrainArriving = moment().add(minutesUntilNextTrain, "minutes");
+    console.log("NEXT ARRIVAL TIME: " + moment(nextTrainArriving).format("HH:mm"));
+
+    var trainFrequency = snapshot.val().frequency;
+    var remainderInTime = differenceTrainTime % trainFrequency;
+    console.log(remainderInTime);
+
+   
+
+    
+    var trainFrequencyElement = $("<td>" + snapshot.val().frequency + "</td>");
+    var trainName = $("<td>" + snapshot.val().name + "</td>");
+    var minutesAway = $("<td>" + minutesUntilNextTrain + "</td>");
+    var nextArrival = $("<td>" + nextTrainArriving.format("HH:mm - 00:00") + "</td>");
+    
+    var tableRow = $("<tr>");
+    
+    var trainDestination = $("<td>" + snapshot.val().destination + "</td>");
+    
+    
+
+    tableRow.append(trainDestination, nextArrival, trainName, minutesAway, trainFrequencyElement);
+    $(".table").append(tableRow);
+
+    // Create Error Handling
+}, function (errorObject) {
+    console.log("The read failed: " + errorObject.code);
+
 });
